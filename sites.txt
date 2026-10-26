@@ -1,0 +1,9 @@
+# Every site built on gramof design, as a path relative to this folder.
+# check.py checks all of them when run without arguments.
+# A new site is not part of the family until it is listed here and passes.
+../whois
+../grainofrain
+../glassbox
+../hexports
+../novaos
+../lens
