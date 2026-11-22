@@ -4,8 +4,8 @@
 #   ./favicons.sh marks/<site>.svg <site-root> [--manifest]
 #
 # Writes into <site-root>:
-#   favicon.svg            the mark, verbatim (what modern browsers use)
-#   favicon.ico            32×32, for legacy clients and the implicit /favicon.ico request
+#   favicon.svg            full-bleed mark (no rx; avoids Safari's dark-mode contrast plate)
+#   favicon.ico            32×32, opaque full-bleed, for legacy clients and /favicon.ico
 #   apple-touch-icon.png   180×180, opaque, full-bleed square (iOS/Safari rounds it itself)
 #   android-chrome-{192x192,512x512}.png   only with --manifest
 #
@@ -23,16 +23,18 @@ command -v "$im" >/dev/null || { echo "ImageMagick not found (brew install image
 
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
 
-# 1. SVG: the mark itself.
-cp "$mark" "$out/favicon.svg"
-
-# 2. ICO: a single 32 px frame, transparent rounded corners like the SVG.
-rsvg-convert -w 32 -h 32 "$mark" -o "$tmp/32.png"
-"$im" "$tmp/32.png" "$out/favicon.ico"
-
-# 3. Touch icon: drop the squircle radius so the background fills the square,
-#    then flatten onto white (covers marks without a background, e.g. glassbox).
+# Drop the squircle radius so the background fills the square — Safari adds a
+# light-grey contrast plate behind dark icons with transparent corners.
 perl -0pe 's/(<rect width="32" height="32") rx="[^"]*"/$1/' "$mark" > "$tmp/square.svg"
+
+# 1. SVG: full-bleed square mark.
+cp "$tmp/square.svg" "$out/favicon.svg"
+
+# 2. ICO: a single 32 px opaque full-bleed frame.
+rsvg-convert -w 32 -h 32 "$tmp/square.svg" -o "$tmp/32.png"
+"$im" "$tmp/32.png" -background white -flatten -alpha off "$out/favicon.ico"
+
+# 3. Touch icon: 180 px opaque full-bleed square.
 rsvg-convert -w 180 -h 180 "$tmp/square.svg" -o "$tmp/180.png"
 "$im" "$tmp/180.png" -background white -flatten -alpha off -strip "$out/apple-touch-icon.png"
 

@@ -295,8 +295,10 @@ def check_site(site, acc):
     fsvg = site / "favicon.svg"
     if not fsvg.exists():
         bad("favicon.svg", "missing")
-    elif mark.exists() and fsvg.read_bytes() != mark.read_bytes():
-        bad("favicon.svg", f"differs from gramofdesign/marks/{name}.svg — copy the mark, never edit here")
+    elif mark.exists():
+        want_fsvg = re.sub(r'(<rect width="32" height="32") rx="[^"]*"', r"\1", mark.read_text(), count=1).encode()
+        if fsvg.read_bytes() != want_fsvg:
+            bad("favicon.svg", f"differs from full-bleed gramofdesign/marks/{name}.svg — rebuild via favicons.sh")
 
     ico = site / "favicon.ico"
     if not ico.exists():
